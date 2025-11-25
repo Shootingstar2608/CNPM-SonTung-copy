@@ -17,22 +17,35 @@ db = {
 
 
 def init_db():
-	"""Initialize sample data (called on import for convenience)."""
-	def _hash(pw: str) -> str:
-		return bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    """Initialize sample data."""
+    def _hash(pw: str) -> str:
+        return bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-	u1 = User(id="u1", name="Đỗ Hồng Phúc", email="tutor@hcmut.edu.vn", password=_hash("123"), role="TUTOR")
-	u2 = User(id="u2", name="Duy Khang", email="student@hcmut.edu.vn", password=_hash("123"), role="STUDENT")
-	u3 = User(id="u3", name="Tín", email="admin@hcmut.edu.vn", password=_hash("admin"), role="ADMIN")
+    u1 = User(id="u1", name="Đỗ Hồng Phúc", email="tutor@hcmut.edu.vn", password=_hash("123"), role="TUTOR")
+    u2 = User(id="u2", name="Duy Khang", email="student@hcmut.edu.vn", password=_hash("123"), role="STUDENT")
+    u3 = User(id="u3", name="Tín", email="admin@hcmut.edu.vn", password=_hash("admin"), role="ADMIN")
 
-	db["users"] = {
-		u1.id: asdict(u1),
-		u2.id: asdict(u2),
-		u3.id: asdict(u3),
-	}
+    db["users"] = {
+        u1.id: asdict(u1),
+        u2.id: asdict(u2),
+        u3.id: asdict(u3),
+    }
 
-	a1 = Appointment(id="a1", tutor_id="u1", student_id=None, time="2025-11-26 09:00")
-	db["appointments"] = {a1.id: asdict(a1)}
+    # --- SỬA ĐOẠN NÀY ---
+    # Cập nhật theo model mới: dùng start_time/end_time thay vì time, bỏ student_id
+    a1 = Appointment(
+        id="a1", 
+        tutor_id="u1", 
+        name="Luyện thi Đại số tuyến tính",
+        start_time="2025-11-26 09:00:00",
+        end_time="2025-11-26 11:00:00",
+        place="H6-304",
+        max_slot=5,
+        status="OPEN"
+    )
+    # --------------------
+
+    db["appointments"] = {a1.id: asdict(a1)}
 
 
 def _next_user_id() -> str:
