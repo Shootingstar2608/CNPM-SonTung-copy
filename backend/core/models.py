@@ -82,16 +82,12 @@ class User:
     name: str
     email: str
     password: str
-    
-    # CẬP NHẬT: role bây giờ có thể là Object Role hoặc string (để tương thích ngược)
-    # Tuy nhiên trong logic mới nên gán Object Role vào đây
     role: any 
     
     booked_appointments: List[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         data = asdict(self)
-        # Xử lý riêng cho field role nếu nó là object Role
         if hasattr(self.role, 'name'):
             data['role'] = self.role.name
         elif hasattr(self.role, 'get'): # Nếu là dict
