@@ -48,3 +48,19 @@ class Document:
 
     def to_dict(self) -> dict:
         return asdict(self)
+
+# Đây là class dùng để lưu lại lịch sử truy cập của từng user 
+# Lưu ý: Chỉ những hành động tải tài liệu (UPLOAD), gửi(SENT), nhận(RECEIVED) 
+# và XEM CHI TIẾT 1 TÀI LIỆU(VIEW) mới được lưu vào lịch sử  
+# Xem toàm bộ tài liệu thì ko ghi tránh gây rác lịch sử 
+@dataclass
+class DocumentAccess:
+    id: str
+    user_id: str    # người thực hiện hành động
+    doc_id: str
+    action: str     # 'VIEW', 'SEND', 'RECEIVE' 
+                    # 'UPLOAD' - dành riêng cho role TUTOR 
+    timestamp: str
+    partner_id: str      # người bị tác động bới hành động của user_id 
+    def to_dict(self) -> dict:
+        return asdict(self)
