@@ -9,7 +9,7 @@ from flask import current_app
 
 from core.models import (
     User, Role, Permission, SyncReport, SyncStatusEnum, 
-    SyncStatus, SyncTypeEnum, AuthResult, SsoLogoutUrl, UserProfile
+    SyncStatus, SyncTypeEnum, AuthResult, SsoLogoutUrl, UserProfile, SchedulerConfig
 )
 from core.database import db
 
@@ -77,9 +77,15 @@ class UserRepository:
     def update_or_create(self, user_data: dict):
         uid = user_data['id']
         if uid in db['users']:
+            current_user = db['users'][uid]
+            
             db['users'][uid]['name'] = user_data['name']
             db['users'][uid]['email'] = user_data['email']
             print(f"[UserRepo] Đã cập nhật thông tin user: {uid}")
+            new_role = user_data.get('role')
+            if new_role and new_role != current_user['role']:
+                print(f"[UserRepo] Phát hiện thay đổi Role của {uid}: {current_user['role']} -> {new_role}")
+                current_user['role'] = new_role
         else:
             from core.database import create_user
             try:
@@ -89,15 +95,19 @@ class UserRepository:
                     password="default_password",
                     role="PENDING"
                 )
-                print(f"[UserRepo] ✨ Đã tạo người dùng mới: {uid}")
+                print(f"[UserRepo] Đã tạo người dùng mới: {uid}")
             except ValueError as e:
                 print(f"[UserRepo] Người dùng đã tồn tại: {uid}")
                 pass
+            
+    def get_user_by_id(self, user_id: str) -> Optional[dict]:
+        return db['users'].get(user_id)
 
 class RoleRepository:
     def update_or_create(self, role_data: dict):
-        print(f"[RoleRepo] Đã cập nhật Role: {role_data['name']} với quyền {role_data['perms']}")
-
+        rid = role_data['id']
+        db['roles'][rid] = role_data
+        print(f"[RoleRepo] Đã đồng bộ Role: {role_data['name']}")
 # Services
 class DataSyncService:
     def __init__(self):
@@ -271,3 +281,107 @@ class AuthService:
     
     def get_sso_password_reset_url(self):
         return "http://localhost:5001/reset"
+    
+class SchedulerService:
+    JOB_ID = 'auto_personal_sync'
+
+    def get_config(self) -> SchedulerConfig:
+        cfg = db['scheduler_config']['main']
+        from app import scheduler
+        job = scheduler.get_job(self.JOB_ID)
+        next_run = str(job.next_run_time) if job else "Chưa lên lịch"
+        
+        return SchedulerConfig(
+            schedule_type=cfg.get('schedule_type', 'INTERVAL'),
+            interval_minutes=cfg.get('interval_minutes', 60),
+            run_time=cfg.get('run_time', "00:00"),
+            day_value=cfg.get('day_value', "*"),
+            is_active=cfg['is_active'],
+            last_run=cfg.get('last_run'),
+            next_run=next_run
+        )
+
+    def update_config(self, new_config: dict):
+        current = db['scheduler_config']['main']
+        current['schedule_type'] = new_config.get('schedule_type', current['schedule_type'])
+        current['interval_minutes'] = new_config.get('interval_minutes', current['interval_minutes'])
+        current['run_time'] = new_config.get('run_time', current['run_time'])
+        current['day_value'] = new_config.get('day_value', current['day_value'])
+        
+        if current['is_active']:
+            self.start_scheduler()
+
+    def start_scheduler(self):
+        from app import scheduler
+        cfg = db['scheduler_config']['main']
+        
+        if scheduler.get_job(self.JOB_ID):
+            scheduler.remove_job(self.JOB_ID)
+            
+        sch_type = cfg.get('schedule_type', 'INTERVAL')
+        
+        if sch_type == 'INTERVAL':
+            minutes = int(cfg.get('interval_minutes', 60))
+            scheduler.add_job(
+                id=self.JOB_ID,
+                func='modules.integration.services:run_auto_sync_job',
+                trigger='interval',
+                minutes=minutes
+            )
+            print(f"[Scheduler] Đã BẬT: Chạy mỗi {minutes} phút.")
+
+        elif sch_type == 'DAILY':
+            # Chạy hàng ngày vào giờ cụ thể
+            time_str = cfg.get('run_time', "00:00")
+            hour, minute = time_str.split(':')
+            scheduler.add_job(
+                id=self.JOB_ID,
+                func='modules.integration.services:run_auto_sync_job',
+                trigger='cron',
+                hour=hour,
+                minute=minute
+            )
+            print(f"[Scheduler] Đã BẬT: Chạy hàng ngày lúc {time_str}.")
+
+        elif sch_type == 'WEEKLY':
+            # Chạy hàng tuần vào thứ mấy
+            time_str = cfg.get('run_time', "00:00")
+            day_val = cfg.get('day_value', 'mon')
+            hour, minute = time_str.split(':')
+            
+            scheduler.add_job(
+                id=self.JOB_ID,
+                func='modules.integration.services:run_auto_sync_job',
+                trigger='cron',
+                day_of_week=day_val,
+                hour=hour,
+                minute=minute
+            )
+            print(f"[Scheduler] Đã BẬT: Chạy hàng tuần ({day_val}) lúc {time_str}.")
+            
+        elif sch_type == 'MONTHLY':
+            # Chạy hàng tháng vào ngày mấy
+            time_str = cfg.get('run_time', "00:00")
+            day_val = cfg.get('day_value', '1') 
+            hour, minute = time_str.split(':')
+            
+            scheduler.add_job(
+                id=self.JOB_ID,
+                func='modules.integration.services:run_auto_sync_job',
+                trigger='cron',
+                day=day_val,
+                hour=hour,
+                minute=minute
+            )
+            print(f"[Scheduler] Đã BẬT: Chạy ngày {day_val} hàng tháng lúc {time_str}.")
+
+        cfg['is_active'] = True
+
+    def stop_scheduler(self):
+        from app import scheduler
+        if scheduler.get_job(self.JOB_ID):
+            scheduler.remove_job(self.JOB_ID)
+        db['scheduler_config']['main']['is_active'] = False
+        print("[Scheduler] Đã TẮT đồng bộ tự động.")
+        
+        

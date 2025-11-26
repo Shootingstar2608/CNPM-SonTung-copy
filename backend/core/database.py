@@ -14,7 +14,16 @@ db = {
     "users": {},         # user_id -> {id,name,email,password,role}
     "appointments": {},  # appt_id -> {id,tutor_id,student_id,time}
     "documents": {},     # doc_id -> Document
-    "access_logs": {}    # Xem lịch sử truy cập 
+    "access_logs": {},   # Xem lịch sử truy cập
+    "scheduler_config": {
+        "main": {
+            "schedule_type": "DAILY",   # Mặc định chạy hàng ngày
+            "interval_minutes": 60,     # Backup
+            "run_time": "02:00",        # Chạy lúc 2 giờ sáng
+            "day_value": "*",           
+            "is_active": False
+        }
+    }
 }
 
 

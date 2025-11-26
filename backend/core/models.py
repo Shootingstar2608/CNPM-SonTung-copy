@@ -36,6 +36,15 @@ class SyncReport:
     message: str
     records_processed: int = 0
     errors: List[str] = field(default_factory=list)
+    
+    def to_dict(self):
+        return {
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+            "status": self.status.value,
+            "message": self.message,
+            "records_processed": self.records_processed,
+            "errors": self.errors
+        }
 
 @dataclass
 class AuthResult:
@@ -53,14 +62,20 @@ class SyncStatus:
     last_run: datetime
     status: SyncStatusEnum
     details: str
+    
+    def to_dict(self):
+        return {
+            "last_run": self.last_run.isoformat() if self.last_run else None,
+            "status": self.status.value,
+            "details": self.details
+        }
 
 # Core entitys
 
 @dataclass
 class Role:
-    id: str   # Ví dụ: "R_ADMIN"
-    name: str # Ví dụ: "ADMIN"
-    # Lưu tập hợp các quyền (Permission objects)
+    id: str
+    name: str
     _permissions: Set[Permission] = field(default_factory=set)
 
     def get_permissions(self) -> Set[Permission]:
@@ -90,7 +105,7 @@ class User:
         data = asdict(self)
         if hasattr(self.role, 'name'):
             data['role'] = self.role.name
-        elif hasattr(self.role, 'get'): # Nếu là dict
+        elif hasattr(self.role, 'get'):
              data['role'] = self.role.get('name', 'UNKNOWN')
         return data
 
@@ -140,4 +155,23 @@ class DocumentAccess:
     partner_id: str      
     
     def to_dict(self) -> dict:
+        return asdict(self)
+    
+@dataclass
+class SchedulerConfig:
+    # type: 'INTERVAL' | 'DAILY' | 'WEEKLY' | 'MONTHLY'
+    schedule_type: str = "INTERVAL" 
+    interval_minutes: int = 60 
+    
+    # Dùng cho DAILY/WEEKLY/MONTHLY (Giờ chạy, ví dụ "02:30")
+    run_time: str = "00:00"
+    
+    # Dùng cho WEEKLY (0=Mon, 6=Sun) hoặc MONTHLY (1-31)
+    day_value: str = "*" 
+    
+    is_active: bool = False
+    last_run: Optional[str] = None
+    next_run: Optional[str] = None
+
+    def to_dict(self):
         return asdict(self)
