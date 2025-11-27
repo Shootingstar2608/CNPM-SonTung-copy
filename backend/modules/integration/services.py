@@ -256,7 +256,7 @@ class AuthService:
         
     def get_detail_profile(self, token: str) -> dict:
         try:
-            secret_key = "dev-secret"
+            secret_key = current_app.config.get('SECRET_KEY', 'dev-secret')
             payload = jwt.decode(token, secret_key, algorithms=['HS256'])
             user_id = payload.get('user_id')
             
@@ -294,7 +294,7 @@ class AuthService:
             print(f"[AuthService] Đã đồng bộ user: {user_data['name']}")
             
             # Tạo token
-            secret_key = "dev-secret"
+            secret_key = current_app.config.get('SECRET_KEY', 'dev-secret')
             payload = {
                 'user_id': sso_info['sso_id'],
                 'role': sso_info.get('role', 'STUDENT'),
@@ -317,7 +317,7 @@ class AuthService:
 
     def validate_local_token(self, token: str) -> bool:
         try:
-            secret_key = "dev-secret"
+            secret_key = current_app.config.get('SECRET_KEY', 'dev-secret')
             jwt.decode(token, secret_key, algorithms=['HS256'])
             return True
         except jwt.ExpiredSignatureError:

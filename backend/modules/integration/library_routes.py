@@ -1,13 +1,12 @@
 # backend/modules/integration/library_routes.py
 from functools import wraps
-from flask import Blueprint, request, jsonify, g, current_app
+from flask import Blueprint, request, jsonify, g
 from datetime import datetime
 import uuid
-import jwt
 
 from core.database import db
 from core.models import Document, DocumentAccess
-from core.security import require_role
+from core.security import require_role, require_login
 
 
 bp = Blueprint('library', __name__, url_prefix='/library')
@@ -16,37 +15,7 @@ bp = Blueprint('library', __name__, url_prefix='/library')
 # phải có cài này ở đây là tại vì mỗi bước lấy lịch sử hay xem chi tiết tài liệu 
 # đều gọi g.get('user_id'), thành ra nếu không gắn thêm decorator kèm theo định nghĩa hàm
 # đó thì sẽ không lấy được user_id 
-def require_login(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        # Lấy token từ Header
-        auth = request.headers.get('Authorization', '')
-        if not auth.startswith('Bearer '):
-            return jsonify({"error": "Unauthorized: Missing token"}), 401
-        
-        token = auth.split(' ', 1)[1].strip()
-        secret = current_app.config.get('SECRET_KEY', 'dev-secret')
-        
-        # Giải mã Token
-        try:
-            payload = jwt.decode(token, secret, algorithms=['HS256'])
-            user_id = payload.get('user_id')
-            
-            # Kiểm tra user có tồn tại trong DB không
-            if not user_id or user_id not in db['users']:
-                return jsonify({"error": "Unauthorized: User not found"}), 401
-                
-            # Gắn thông tin vào biến toàn cục g
-            g.user_id = user_id
-            g.current_user = db['users'][user_id]
-            
-        except jwt.ExpiredSignatureError:
-            return jsonify({"error": "Token expired"}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({"error": "Invalid token"}), 401
-            
-        return f(*args, **kwargs)
-    return decorated_function
+# use `require_login` from core.security (imported above)
 
 # Hàm ghi lại lịch sử truy cập 
 def log_access(user_id, doc_id, action, partner_id=""):

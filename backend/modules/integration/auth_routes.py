@@ -1,5 +1,6 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 from modules.integration.services import AuthService
+from core.security import require_login
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -47,15 +48,10 @@ def verify():
     return jsonify({'valid': is_valid}), 200
 
 @bp.route('/profile', methods=['GET'])
+@require_login
 def get_my_profile():
-    auth_header = request.headers.get('Authorization', '')
-    if not auth_header.startswith('Bearer '):
-        return jsonify({'error': 'Thiếu hoặc sai format Token'}), 401
-    
-    token = auth_header.split(' ')[1]
-    profile = auth_service.get_detail_profile(token)
-    
-    if 'error' in profile:
-        return jsonify(profile), 401
-        
-    return jsonify({'user': profile}), 200
+    # `require_login` already set `g.current_user`
+    user = g.get('current_user')
+    if not user:
+        return jsonify({'error': 'Unauthorized'}), 401
+    return jsonify({'user': user}), 200
