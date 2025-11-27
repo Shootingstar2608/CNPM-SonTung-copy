@@ -46,8 +46,5 @@ Ghi chú:
 - Không upload file: `/library/upload` nhận `link` (URL). FE nên upload file lên dịch vụ lưu trữ (Drive/Cloud) và gửi URL.
 - Lỗi trả về dạng JSON với trường `error` và mã HTTP phù hợp.
 
-Nếu bạn muốn, tôi có thể:
-- xuất bảng này thành CSV để nhập vào Google Sheets,
-- sinh Postman collection JSON với request mẫu,
-- hoặc tạo OpenAPI (YAML) sơ khai từ các endpoint này.
+
 
