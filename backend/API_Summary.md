@@ -76,7 +76,5 @@ Ghi chú cho FE:
 - Timestamps: `YYYY-MM-DD HH:MM:SS`.
 - Với thao tác thay đổi trạng thái (upload, share, grant-role, book), FE nên dựa vào HTTP status và trường `message` trong response để hiển thị trạng thái.
 
-----
 
-Muốn mình xuất tài liệu này thành CSV/Google Sheets, Postman collection hoặc OpenAPI không? Mình làm tiếp nếu bạn muốn.
 
