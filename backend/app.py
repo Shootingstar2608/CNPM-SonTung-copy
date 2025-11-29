@@ -4,6 +4,7 @@ from core.database import init_db
 from extensions import scheduler
 from flask_cors import CORS
 
+
 # Import Blueprints
 from modules.integration.auth_routes import bp as auth_bp
 from modules.scheduling.routes import bp as scheduling_bp 
