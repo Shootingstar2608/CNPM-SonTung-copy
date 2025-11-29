@@ -79,7 +79,7 @@ const OpenSessionPage = () => {
 
             if (response.ok) {
                 alert("✅ Tạo buổi tư vấn thành công!");
-                navigate('/'); // Quay về trang chủ
+                navigate('/tutor-home'); // Quay về trang chủ của Tutor
             } else {
                 // Xử lý lỗi từ Backend (ví dụ: trùng lịch)
                 alert(`❌ Lỗi: ${data.error || 'Không thể tạo lịch'}`);
