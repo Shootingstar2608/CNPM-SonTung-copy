@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, redirect
+import os
 from modules.integration.services import AuthService
 from core.security import require_login
 
@@ -23,13 +24,16 @@ def sso_callback():
     result = auth_service.handle_sso_callback(code)
 
     if result.success:
-        return jsonify({
-            'message': 'SSO Login Success',
-            'access_token': result.token,
-            'user_id': result.user_id
-        }), 200
+        # Redirect back to frontend with token as query params so frontend can
+        # persist token into localStorage and continue the SPA flow.
+        frontend_url = os.environ.get('FRONTEND_URL', 'http://127.0.0.1:5173')
+        redirect_to = f"{frontend_url}/sso/callback?token={result.token}&user_id={result.user_id}"
+        return redirect(redirect_to)
     else:
-        return jsonify({'error': result.error_message}), 401
+        # In case of failure, redirect back with error message
+        frontend_url = os.environ.get('FRONTEND_URL', 'http://127.0.0.1:5173')
+        redirect_to = f"{frontend_url}/sso/callback?error={result.error_message}"
+        return redirect(redirect_to)
 
 @bp.route('/logout', methods=['POST'])
 def logout():

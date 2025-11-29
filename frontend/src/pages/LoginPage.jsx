@@ -1,81 +1,42 @@
-// frontend/src/pages/LoginPage.jsx
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import Header from '../components/Header'; // Tận dụng Header nếu muốn, hoặc bỏ đi để làm trang login riêng biệt
-import './LoginPage.css'; // Chúng ta sẽ tạo file CSS ngay sau đây
+import { Link } from 'react-router-dom';
+import './LoginPage.css';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const SSO_ENDPOINT = 'http://127.0.0.1:5000/auth/sso/login-url';
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleSso = async () => {
     setError('');
-
     try {
-      // 1. Gọi API Login
-      const response = await fetch('http://127.0.0.1:5000/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
+      // Lấy URL redirect tới SSO từ backend
+      const res = await fetch(SSO_ENDPOINT);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Không thể lấy URL SSO');
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Đăng nhập thất bại');
-      }
-
-      // 2. Lưu Token vào LocalStorage
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('user_id', data.user_id); // Lưu thêm user_id nếu cần
-
-      // 3. Chuyển hướng vào trang chính (MeetingPage)
-      alert("Đăng nhập thành công!");
-      navigate('/');
-
-    } catch (err) {
-      setError(err.message);
+      // Chuyển hướng trình duyệt tới SSO (backend trả redirect_url tới SSO)
+      window.location.href = data.redirect_url;
+    } catch (e) {
+      setError(e.message || 'Lỗi khi bắt đầu SSO');
     }
   };
 
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2 className="auth-title">🔐 Đăng nhập BKTutor</h2>
+        <h2 className="auth-title">🔐 Đăng nhập BKTutor (SSO)</h2>
 
         {error && <div className="auth-error">{error}</div>}
 
-        <form onSubmit={handleLogin}>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="nhap_email@hcmut.edu.vn"
-              required
-            />
+        <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+          <button className="btn-auth" onClick={handleSso}>Đăng nhập bằng SSO</button>
+          <div style={{textAlign: 'center'}}>
+            <small>Hoặc liên hệ admin để tạo tài khoản.</small>
           </div>
-
-          <div className="form-group">
-            <label>Mật khẩu</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••"
-              required
-            />
-          </div>
-
-          <button type="submit" className="btn-auth">Đăng nhập</button>
-        </form>
+        </div>
 
         <p className="auth-footer">
-          Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+          Chưa có tài khoản? <Link to="/register">Đăng ký (SSO)</Link>
         </p>
       </div>
     </div>

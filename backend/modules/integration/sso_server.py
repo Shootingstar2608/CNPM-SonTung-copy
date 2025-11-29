@@ -1,5 +1,15 @@
 # sso_server.py
 from flask import Flask, request, jsonify, redirect
+import os
+
+# Try to use the app's in-memory DB for credential verification when available
+try:
+    from core.database import init_db, authenticate, get_user_by_email
+    # initialize sample data for the mock SSO (safe to call)
+    init_db()
+    USING_APP_DB = True
+except Exception:
+    USING_APP_DB = False
 from datetime import datetime, timedelta
 import uuid
 
@@ -37,56 +47,90 @@ def authorize():
     return f"""
     <div style="text-align:center; padding-top:20px; font-family:sans-serif">
         <h2>Giả lập SSO (5 Roles)</h2>
-        <p>Chọn tài khoản để đăng nhập:</p>
-        <form action="/login-action" method="POST">
-            <input type="hidden" name="redirect_uri" value="{redirect_uri}">
-            
-            <div style="margin-bottom: 15px;">
-                <button name="user" value="admin" style="padding:10px; width: 200px; cursor:pointer; background:#fce4ec; border:1px solid #880e4f">
-                    <strong>Admin:</strong> Lê Trọng Tín
-                </button>
-            </div>
+        <p>Vui lòng đăng nhập bằng Email & Mật khẩu:</p>
 
-            <div style="margin-bottom: 15px;">
-                <button name="user" value="tutor" style="padding:10px; width: 200px; cursor:pointer; background:#fff3e0; border:1px solid #e65100">
-                    <strong>Tutor:</strong> Đỗ Hồng Phúc
-                </button> 
-                <button name="user" value="student" style="padding:10px; width: 200px; cursor:pointer; background:#e0f7fa; border:1px solid #006064">
-                    <strong>Student:</strong> Duy Khang
-                </button> 
-            </div>
-            
-            <div style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 20px;">
-                <p><strong>Nhóm Quản lý & Phòng ban:</strong></p>
-                <button name="user" value="officer" style="padding:10px; width: 200px; cursor:pointer; background:#e8eaf6; border:1px solid #1a237e">
-                    <strong>Officer:</strong> Mai Đức Trung<br>(Phòng Đào tạo)
-                </button> 
-                <button name="user" value="dept" style="padding:10px; width: 200px; cursor:pointer; background:#f3e5f5; border:1px solid #4a148c">
-                    <strong>Dept:</strong> Quản Thành Thơ<br>(Phòng CTSV)
-                </button>
-            </div>
-        </form>
+        <div style="margin: 10px 0;">
+            <form action="/login-action" method="POST" style="display:inline-block; text-align:left;">
+                <input type="hidden" name="redirect_uri" value="{redirect_uri}">
+                <div style="margin-bottom:8px;"><label>Email:</label><br><input name="email" type="email" style="padding:8px; width:260px" required></div>
+                <div style="margin-bottom:8px;"><label>Mật khẩu:</label><br><input name="password" type="password" style="padding:8px; width:260px" required></div>
+                <div><button type="submit" style="padding:10px 18px; background:#1976d2; color:white; border:none; cursor:pointer;">Đăng nhập bằng Email</button></div>
+            </form>
+        </div>
     </div>
     """
 
 @app.route('/login-action', methods=['POST'])
 def login_action():
-    user_key = request.form.get('user')
-    redirect_uri = request.form.get('redirect_uri')
-    
-    if user_key not in MOCK_USERS:
-        return "User not found", 400
+    # Accept values from form or querystring for robustness
+    vals = request.values
+    redirect_uri = vals.get('redirect_uri')
+    # If redirect_uri missing (some browsers/forms may not include), try to
+    # recover from Referer header or fallback to default backend callback.
+    if not redirect_uri:
+        referer = request.headers.get('Referer') or request.referrer
+        if referer:
+            try:
+                from urllib.parse import urlparse, parse_qs
+                q = urlparse(referer).query
+                params = parse_qs(q)
+                ru = params.get('redirect_uri')
+                if ru:
+                    redirect_uri = ru[0]
+                    print(f"[SSO] Recovered redirect_uri from Referer: {redirect_uri}")
+            except Exception:
+                pass
+    if not redirect_uri:
+        # final fallback to backend callback
+        redirect_uri = os.environ.get('BACKEND_CALLBACK', 'http://127.0.0.1:5000/auth/sso/callback')
+        print(f"[SSO] No redirect_uri provided; falling back to {redirect_uri}")
+    email = vals.get('email')
+    password = vals.get('password')
+
+    if not redirect_uri:
+        return "Missing redirect_uri", 400
+
+    # Validate presence
+    if not email or not password:
+        return "Missing credentials", 400
+
+    user_info = None
+
+    # Try app DB authentication first (if available)
+    if USING_APP_DB:
+        uid = authenticate(email, password)
+        if uid:
+            u = get_user_by_email(email)
+            user_info = {
+                'sso_id': u.get('id'),
+                'name': u.get('name'),
+                'email': u.get('email'),
+                'role': u.get('role', 'STUDENT')
+            }
+        else:
+            return "Invalid credentials", 401
+    else:
+        # fallback to MOCK_USERS by email
+        found = None
+        for k, v in MOCK_USERS.items():
+            if v.get('email') == email:
+                found = v
+                break
+        if found:
+            # In mock fallback we don't verify password strongly; just accept
+            user_info = found
+        else:
+            return "Invalid credentials", 401
 
     clean_expired_codes()
-    
     code = f"auth_{uuid.uuid4().hex[:8]}"
     active_codes[code] = {
-        'user_info': MOCK_USERS[user_key],
+        'user_info': user_info,
         'created_at': datetime.now(),
         'used': False
     }
-    
-    print(f"[SSO] Generated code: {code} for user: {user_key}")
+
+    print(f"[SSO] Generated code: {code} for user: {user_info.get('email')}")
     print(f"[SSO] Redirecting to: {redirect_uri}?code={code}")
     return redirect(f"{redirect_uri}?code={code}")
 
