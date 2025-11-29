@@ -16,12 +16,12 @@ import uuid
 app = Flask(__name__)
 
 MOCK_USERS = {
-    "student": { "sso_id": "u2", "name": "Bùi Trần Duy Khang", "email": "student@hcmut.edu.vn", "role": "STUDENT" },
-    "tutor":   { "sso_id": "u1", "name": "Đỗ Hồng Phúc", "email": "tutor@hcmut.edu.vn", "role": "TUTOR" },
-    "admin":   { "sso_id": "u3", "name": "Lê Trọng Tín", "email": "admin@hcmut.edu.vn", "role": "ADMIN" },
+    "student": { "sso_id": "u2", "name": "Bùi Trần Duy Khang", "email": "student@hcmut.edu.vn", "role": "STUDENT", "password": "456" },
+    "tutor":   { "sso_id": "u1", "name": "Đỗ Hồng Phúc", "email": "tutor@hcmut.edu.vn", "role": "TUTOR", "password": "123" },
+    "admin":   { "sso_id": "u3", "name": "Lê Trọng Tín", "email": "admin@hcmut.edu.vn", "role": "ADMIN", "password": "admin" },
     
-    "officer": { "sso_id": "u4", "name": "Mai Đức Trung", "email": "mai.trung@hcmut.edu.vn", "role": "OFFICER" },
-    "dept":    { "sso_id": "u5", "name": "Quản Thành Thơ", "email": "thothanhquan@hcmut.edu.vn", "role": "DEPARTMENT" }
+    "officer": { "sso_id": "u4", "name": "Mai Đức Trung", "email": "mai.trung@hcmut.edu.vn", "role": "OFFICER", "password": "123" },
+    "dept":    { "sso_id": "u5", "name": "Quản Thành Thơ", "email": "thothanhquan@hcmut.edu.vn", "role": "DEPARTMENT", "password": "123" }
 }
 
 active_codes = {}
@@ -117,7 +117,14 @@ def login_action():
                 found = v
                 break
         if found:
-            # In mock fallback we don't verify password strongly; just accept
+            # Verify mock password (do not accept any password)
+            expected_pw = found.get('password')
+            if expected_pw is None:
+                print(f"[SSO] Mock user {email} has no password set; rejecting login")
+                return "Invalid credentials", 401
+            if password != expected_pw:
+                print(f"[SSO] Invalid password for mock user {email}")
+                return "Invalid credentials", 401
             user_info = found
         else:
             return "Invalid credentials", 401
