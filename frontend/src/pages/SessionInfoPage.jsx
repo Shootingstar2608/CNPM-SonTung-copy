@@ -1,132 +1,163 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import RescheduleModal from '../components/RescheduleModal';
 import MinutesModal from '../components/MinutesModal';
 import StatusModal from '../components/StatusModal';
 
 const SessionInfoPage = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // Lấy ID từ URL
+  const token = localStorage.getItem('access_token');
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // State lưu thông tin buổi học
+  const [sessionData, setSessionData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // State Modal
   const [isMinutesOpen, setIsMinutesOpen] = useState(false);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
-
-  const [statusModal, setStatusModal] = useState({
-    isOpen: false,
-    type: 'confirm', // 'confirm' | 'success' | 'error'
-    title: '',
-    message: ''
+  
+  // State thông báo trạng thái
+  const [statusModal, setStatusModal] = useState({ 
+    isOpen: false, 
+    type: 'success', 
+    title: '', 
+    message: '',
+    onConfirm: null 
   });
 
-  const handleRescheduleSubmit = () => {
-    setIsRescheduleOpen(false); // Đóng form đổi lịch
-
-    // --- TEST CÁC TRƯỜNG HỢP ---
-    const isSuccess = false;       // Trường hợp 1: Thành công
-    const isEndedMeeting = false;  // Trường hợp 2: Lỗi đã kết thúc
-    const isSystemError = true;   // Trường hợp 3: Lỗi hệ thống
-
-    if (isEndedMeeting) {
-      setStatusModal({
-        isOpen: true,
-        type: 'error',
-        title: 'Failed',
-        message: 'Không thể thay đổi một buổi gặp đã kết thúc'
+  // --- 1. GỌI API LẤY CHI TIẾT BUỔI HỌC ---
+  const fetchSessionDetail = async () => {
+    try {
+      // Backend chưa có API get single, ta lấy hết rồi lọc
+      const res = await fetch('http://127.0.0.1:5000/appointments/', {
+          headers: { 'Authorization': `Bearer ${token}` }
       });
-    } else if (isSystemError) {
-      setStatusModal({
-        isOpen: true,
-        type: 'error',
-        title: 'Failed',
-        message: 'Đã có lỗi xảy ra. Vui lòng thử lại'
-      });
-    } else if (isSuccess) {
-      setStatusModal({
-        isOpen: true,
-        type: 'success',
-        title: 'Success',
-        message: 'Buổi tư vấn đã được thay đổi'
-      });
+      if (res.ok) {
+          const list = await res.json();
+          const found = list.find(item => item.id === id);
+          if (found) {
+              setSessionData(found);
+          } else {
+              // Nếu không tìm thấy (do ID sai hoặc đã bị xóa)
+              setStatusModal({
+                isOpen: true,
+                type: 'error',
+                title: 'Lỗi',
+                message: 'Không tìm thấy thông tin buổi học.',
+                onConfirm: () => navigate('/')
+              });
+          }
+      }
+    } catch (error) {
+      console.error("Lỗi:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchSessionDetail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  // --- 2. XỬ LÝ HỦY LỊCH (DELETE) ---
   const handleCancelClick = () => {
     setStatusModal({
       isOpen: true,
       type: 'confirm',
-      title: 'Bạn có chắc chắn muốn hủy buổi gặp này không?',
-      message: 'Hành động này sẽ không thể hoàn tác.'
+      title: 'Xác nhận hủy',
+      message: 'Bạn có chắc chắn muốn hủy buổi gặp này không?',
+      onConfirm: confirmCancel
     });
   };
 
-  const handleConfirmCancel = () => {
-    // Giả lập logic gọi API hủy lịch ở đây...
-    const isSuccess = true; // Thử sửa thành false để test trường hợp lỗi
+  const confirmCancel = async () => {
+      try {
+          const res = await fetch(`http://127.0.0.1:5000/appointments/${id}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+              setStatusModal({ 
+                isOpen: true, 
+                type: 'success', 
+                title: 'Thành công', 
+                message: 'Đã hủy buổi học.',
+                onConfirm: () => navigate('/') // Bấm OK thì về trang chủ
+              });
+          } else {
+              const data = await res.json();
+              setStatusModal({ 
+                isOpen: true, 
+                type: 'error', 
+                title: 'Lỗi', 
+                message: data.error || 'Không thể hủy lịch.' 
+              });
+          }
+      } catch (e) {
+          console.error(e);
+          setStatusModal({ isOpen: true, type: 'error', title: 'Lỗi', message: 'Lỗi kết nối server' });
+      }
+  };
 
-    if (isSuccess) {
-      setStatusModal({
-        isOpen: true,
-        type: 'success',
-        title: 'Success',
-        message: 'Buổi tư vấn này đã được hủy'
-      });
-    } else {
-      setStatusModal({
-        isOpen: true,
-        type: 'error',
-        title: 'Failed',
-        message: 'Không thể hủy một buổi gặp đã kết thúc' // Hoặc thông báo lỗi khác
-      });
+  // --- 3. XỬ LÝ ĐỔI LỊCH (PUT) ---
+  const handleRescheduleSubmit = async (newData) => {
+    setIsRescheduleOpen(false); // Đóng form nhập liệu
+
+    try {
+        const res = await fetch(`http://127.0.0.1:5000/appointments/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(newData)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            setStatusModal({ 
+                isOpen: true, 
+                type: 'success', 
+                title: 'Thành công', 
+                message: 'Đổi lịch thành công!',
+                onConfirm: () => {
+                    setStatusModal({ ...statusModal, isOpen: false });
+                    setLoading(true);
+                    fetchSessionDetail(); // Tải lại dữ liệu mới ngay lập tức
+                }
+            });
+        } else {
+            setStatusModal({ 
+                isOpen: true, 
+                type: 'error', 
+                title: 'Thất bại', 
+                message: data.error || 'Không thể đổi lịch' 
+            });
+        }
+    } catch (err) {
+        setStatusModal({ isOpen: true, type: 'error', title: 'Lỗi', message: 'Lỗi kết nối server' });
     }
   };
 
-  const handleCreateMinutes = () => {
-    // Giả lập ngày hiện tại và ngày họp
-    const today = new Date();
-    const meetingDate = new Date('2025-12-01'); // Giả sử lịch họp là ngày 1/12/2025 (Tương lai)
+  const handleCreateMinutes = () => { setIsMinutesOpen(true); };
 
-    // TRƯỜNG HỢP 1: Lỗi do buổi gặp trong tương lai (Giống hình trên)
-    // Bạn thử đổi logic if(true) để test 
-    const isFutureMeeting = false; 
+  // --- RENDER ---
+  if (loading) return <div className="text-center pt-20">Đang tải thông tin...</div>;
+  if (!sessionData) return null; // Modal lỗi sẽ hiện thay thế
 
-    if (isFutureMeeting) {
-      setStatusModal({
-        isOpen: true,
-        type: 'error', // Màu đỏ
-        title: 'Failed',
-        message: 'Không thể tổng hợp biên bản cho một buổi gặp trong tương lai.'
-      });
-      return; // Dừng lại, không mở form biên bản
-    }
-
-    // TRƯỜNG HỢP 2: Lỗi hệ thống chung chung (Giống hình dưới)
-    const isSystemError = false; // Đổi thành true để test
-
-    if (isSystemError) {
-      setStatusModal({
-        isOpen: true,
-        type: 'error',
-        title: 'Failed',
-        message: 'Đã có lỗi xảy ra. Vui lòng thử lại'
-      });
-      return;
-    }
-
-    // Nếu không có lỗi gì -> Mở Modal biên bản lên
-    setIsMinutesOpen(true);
-  };
+  // Tách chuỗi ngày giờ để hiển thị
+  const [dateStr, timeStr] = (sessionData.start_time || " ").split(' ');
+  const endTimeStr = (sessionData.end_time || " ").split(' ')[1];
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-700 pb-10">
       <Header />
-      
-      {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 text-xs text-gray-500">
-        <Link to="/" className="hover:text-blue-600">Trang chủ</Link>
-        <span className="mx-2">›</span>
-        <Link to="/" className="hover:text-blue-600">Quản lý buổi gặp</Link>
+        <span className="cursor-pointer hover:text-blue-600" onClick={() => navigate('/')}>Trang chủ</span>
         <span className="mx-2">›</span>
         <span className="font-medium text-gray-700">Thông tin buổi tư vấn</span>
       </div>
@@ -135,75 +166,56 @@ const SessionInfoPage = () => {
         <h1 className="text-xl font-bold text-gray-900 mb-6">Thông tin buổi tư vấn</h1>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-          
           <div className="space-y-6">
+            
             {/* Chủ đề */}
             <div>
               <h3 className="font-bold text-gray-900 mb-1">Chủ đề</h3>
-              <p className="text-sm text-gray-600">Lorem ipsum dolor sit amet consectetur.</p>
+              <p className="text-lg text-blue-700 font-medium">{sessionData.name}</p>
             </div>
 
-            {/* Nội dung */}
+            {/* Trạng thái */}
             <div>
-              <h3 className="font-bold text-gray-900 mb-1">Nội dung</h3>
-              <p className="text-sm text-gray-600 leading-relaxed text-justify">
-                Lorem ipsum dolor sit amet consectetur. Amet massa elit aliquam adipiscing imperdiet morbi porta. 
-                Amet duis quam adipiscing fames vivamus rhoncus lacus aliquam. Volutpat lorem est ultrices mauris dolor 
-                a scelerisque imperdiet egestas. Turpis semper etiam lacus id tincidunt. Semper tincidunt a erat nunc 
-                pellentesque eu. Adipiscing faucibus egestas hendrerit eu dolor tristique.
-              </p>
+              <h3 className="font-bold text-gray-900 mb-1">Trạng thái</h3>
+              <span className={`px-2 py-1 rounded text-xs font-bold ${sessionData.status === 'OPEN' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {sessionData.status}
+              </span>
             </div>
 
-            {/* Grid thông tin chi tiết */}
+            {/* Grid Thông tin chi tiết */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-2">
               <div>
                 <h3 className="font-bold text-gray-900 text-sm mb-1">Ngày</h3>
-                <p className="text-sm text-gray-600">31/10/2025</p>
+                <p className="text-sm text-gray-600">{dateStr}</p>
               </div>
               <div>
                 <h3 className="font-bold text-gray-900 text-sm mb-1">Khung giờ</h3>
-                <p className="text-sm text-gray-600">7:00 - 9:00</p>
+                <p className="text-sm text-gray-600">{timeStr} - {endTimeStr}</p>
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 text-sm mb-1">Hình thức</h3>
-                <p className="text-sm text-gray-600">Online</p>
+                <h3 className="font-bold text-gray-900 text-sm mb-1">Hình thức/Địa điểm</h3>
+                <p className="text-sm text-gray-600">{sessionData.place}</p>
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 text-sm mb-1">Số lượng sinh viên</h3>
-                <p className="text-sm text-gray-600">36/40</p>
+                <h3 className="font-bold text-gray-900 text-sm mb-1">Sĩ số</h3>
+                <p className="text-sm text-gray-600">{(sessionData.current_slots || []).length} / {sessionData.max_slot}</p>
               </div>
             </div>
 
-            {/* Link phòng */}
-            <div>
-              <h3 className="font-bold text-gray-900 text-sm mb-1">Link phòng</h3>
-              <a href="#" className="text-sm text-blue-500 hover:underline">www.meet.google.com</a>
-            </div>
           </div>
 
-          {/* Footer Buttons */}
+          {/* Các nút hành động */}
           <div className="flex flex-wrap justify-center gap-4 mt-12 border-t pt-8">
-            <button 
-              onClick={handleCancelClick}
-              className="px-6 py-2 border border-gray-400 rounded hover:bg-gray-50 text-gray-700 font-medium min-w-[120px]"
-            >
+            <button onClick={handleCancelClick} className="px-6 py-2 border border-gray-400 rounded hover:bg-gray-50 text-red-600 font-medium min-w-[120px]">
               Hủy Lịch
             </button>
-            
-            <button 
-                onClick={() => setIsRescheduleOpen(true)}
-                className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded font-medium min-w-[120px]"
-            >
+            <button onClick={() => setIsRescheduleOpen(true)} className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded font-medium min-w-[120px]">
               Đổi Lịch
             </button>
-            <button 
-                onClick={handleCreateMinutes} 
-                className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded font-medium min-w-[120px]"
-            >
-              Tổng hợp biên bản
+            <button onClick={handleCreateMinutes} className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium min-w-[120px]">
+              Biên bản
             </button>
           </div>
-
         </div>
       </main>
 
@@ -218,13 +230,14 @@ const SessionInfoPage = () => {
       <MinutesModal 
         isOpen={isMinutesOpen} 
         onClose={() => setIsMinutesOpen(false)} 
+        sessionData={sessionData} // <--- THÊM DÒNG NÀY ĐỂ TRUYỀN DỮ LIỆU
       />
-
-      {/* 3. Modal Thông báo (Status) */}
+      
+      {/* 3. Modal Thông báo chung */}
       <StatusModal 
         isOpen={statusModal.isOpen}
         onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
-        onConfirm={handleConfirmCancel} 
+        onConfirm={statusModal.onConfirm} 
         type={statusModal.type}
         title={statusModal.title}
         message={statusModal.message}

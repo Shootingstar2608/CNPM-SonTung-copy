@@ -103,7 +103,7 @@ function App() {
 
         <Route path="/create-session" element={<ProtectedRoute><OpenSessionPage/></ProtectedRoute>} />
         <Route path="/free-schedule" element={<ProtectedRoute><FreeSchedulePage/></ProtectedRoute>} />
-        <Route path="/session-info" element={<ProtectedRoute><SessionInfoPage/></ProtectedRoute>} />
+        <Route path="/session-info/:id" element={<ProtectedRoute><SessionInfoPage/></ProtectedRoute>} />
 
         <Route path="/resources" element={<ProtectedRoute><ResourceMenuPage/></ProtectedRoute>} />
         <Route path="/resources/upload" element={<ProtectedRoute><ResourcePage/></ProtectedRoute>} />

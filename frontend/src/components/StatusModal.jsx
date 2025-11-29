@@ -8,7 +8,7 @@ const StatusModal = ({
   type = 'success', 
   title, 
   message,
-  confirmText = 'OK' // Mặc định là OK, nhưng có thể đổi thành "Thêm", "Xóa"...
+  confirmText = 'OK' 
 }) => {
   if (!isOpen) return null;
 
@@ -16,7 +16,17 @@ const StatusModal = ({
   const isSuccess = type === 'success';
   const isError = type === 'error';
   const isWarning = type === 'warning'; 
-  const isErrorAction = type === 'error-action'; // <-- Loại mới: Lỗi nhưng có nút hành động (Hình 2)
+  const isErrorAction = type === 'error-action';
+
+  // --- HÀM XỬ LÝ KHI BẤM NÚT ĐƠN (Success/Error) ---
+  const handleSingleButtonClick = () => {
+    // Nếu có hàm onConfirm (ví dụ: chuyển trang), chạy nó
+    if (onConfirm) {
+      onConfirm();
+    }
+    // Sau đó đóng modal
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
@@ -65,7 +75,7 @@ const StatusModal = ({
               </div>
             )}
 
-            {/* 3. Error Action (Thoát / Thêm) - Giống hình bạn gửi */}
+            {/* 3. Error Action (Thoát / Thêm) */}
             {isErrorAction && (
               <div className="flex gap-4">
                 <button onClick={onClose} className="flex-1 py-2 border border-gray-300 rounded text-gray-900 font-bold hover:bg-gray-50">Thoát</button>
@@ -76,7 +86,7 @@ const StatusModal = ({
             {/* 4. Success / Error thường (1 nút) */}
             {(isSuccess || isError) && (
               <button 
-                onClick={onClose}
+                onClick={handleSingleButtonClick} // <--- ĐÃ SỬA: Gọi hàm xử lý mới thay vì onClose trực tiếp
                 className={`w-full py-2 rounded font-bold shadow-sm transition-colors ${
                     isSuccess ? 'bg-white border border-gray-400 text-gray-800 hover:bg-gray-50' : 'bg-red-600 text-white hover:bg-red-700'
                 }`}

@@ -15,6 +15,7 @@ db = {
     "appointments": {},  # appt_id -> {id,tutor_id,student_id,time}
     "documents": {},     # doc_id -> Document
     "access_logs": {},   # Xem lịch sử truy cập
+    "free_schedules": {},
     "scheduler_config": {
         "main": {
             "schedule_type": "DAILY",   # Mặc định chạy hàng ngày
