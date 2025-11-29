@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Bell, ChevronDown, User, Calendar, Settings, LogOut } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
@@ -8,29 +8,46 @@ import logoBKTutor from '../assets/logo.png';
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // State để đóng/mở menu người dùng (Avatar)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Hàm kiểm tra đường dẫn để active màu xanh
-  const getLinkClass = (path) => {
-    // Logic: Nếu path là '/', kiểm tra các trang con của Home
-    if (path === '/') {
-      const homePages = ['/', '/create-session', '/free-schedule', '/session-info'];
-      return homePages.includes(location.pathname)
-        ? "text-blue-600 border-b-2 border-blue-600 py-5 font-bold cursor-pointer transition-colors"
-        : "text-gray-900 hover:text-blue-600 py-5 font-medium cursor-pointer transition-colors";
-    }
-    
-    // Logic: Nếu path là '/resources', kiểm tra các trang con của Resource
-    if (path === '/resources') {
-      return location.pathname.startsWith('/resources')
-        ? "text-blue-600 border-b-2 border-blue-600 py-5 font-bold cursor-pointer transition-colors"
-        : "text-gray-900 hover:text-blue-600 py-5 font-medium cursor-pointer transition-colors";
-    }
+  const roleHomePath = useMemo(() => {
+    const roleMap = {
+      STUDENT: '/student-home',
+      TUTOR: '/tutor-home',
+      ADMIN: '/admin-home',
+      OFFICER: '/admin-home',
+      DEPARTMENT: '/admin-home'
+    };
 
-    // Mặc định
-    return "text-gray-900 hover:text-blue-600 py-5 font-medium cursor-pointer transition-colors";
+    const resolveRole = () => {
+      try {
+        const stored = localStorage.getItem('user_data');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.role) return parsed.role.toUpperCase();
+        }
+      } catch {
+        // ignore parse errors
+      }
+      const cachedRole = localStorage.getItem('user_role');
+      return cachedRole ? cachedRole.toUpperCase() : null;
+    };
+
+    const detectedRole = resolveRole();
+    return roleMap[detectedRole] || '/login';
+  }, []);
+
+  const handleNavigateHome = () => navigate(roleHomePath);
+
+  const getLinkClass = (path, includeChildren = false) => {
+    const isActive = includeChildren
+      ? location.pathname.startsWith(path)
+      : location.pathname === path;
+    return isActive
+      ? 'text-blue-600 border-b-2 border-blue-600 py-5 font-bold cursor-pointer transition-colors'
+      : 'text-gray-900 hover:text-blue-600 py-5 font-medium cursor-pointer transition-colors';
   };
 
   return (
@@ -39,9 +56,9 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           
           {/* --- LOGO --- */}
-          <div 
-            className="flex items-center gap-3 cursor-pointer" 
-            onClick={() => navigate('/')}
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={handleNavigateHome}
           >
             {/* Nếu có ảnh thì dùng ảnh, không thì dùng Text */}
             <img 
@@ -58,21 +75,21 @@ const Header = () => {
 
           {/* --- MENU LINKS --- */}
           <nav className="hidden md:flex space-x-8 text-sm">
-            <Link to="/" className="text-gray-900 hover:text-blue-600 py-5 font-medium">Trang chủ</Link>
-            <Link to="/" className="text-gray-900 hover:text-blue-600 py-5 font-medium">Thông tin</Link>
-            <Link to="/" className="text-gray-900 hover:text-blue-600 py-5 font-medium">Blog</Link>
+            <Link to={roleHomePath} className={getLinkClass(roleHomePath, true)}>Trang chủ</Link>
+            <Link to={roleHomePath} className="text-gray-900 hover:text-blue-600 py-5 font-medium">Thông tin</Link>
+            <Link to={roleHomePath} className="text-gray-900 hover:text-blue-600 py-5 font-medium">Blog</Link>
             
             <div className="relative group cursor-pointer flex items-center gap-1 hover:text-blue-600 py-5 font-medium">
               Đặt lịch <ChevronDown size={14} />
             </div>
             
             {/* Link 1: Quản lý buổi gặp */}
-            <Link to="/" className={getLinkClass('/')}>
+            <Link to="/meetings" className={getLinkClass('/meetings', true)}>
               Quản lý buổi gặp
             </Link>
             
             {/* Link 2: Tài liệu học tập */}
-            <Link to="/resources" className={getLinkClass('/resources')}>
+            <Link to="/resources" className={getLinkClass('/resources', true)}>
               Tài liệu học tập
             </Link>
           </nav>

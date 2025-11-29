@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 // Import các trang
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import StudentHomePage from './pages/StudentHomePage';
+import TutorHomePage from './pages/TutorHomePage';
+import AdminHomePage from './pages/AdminHomePage';
 import MeetingPage from './pages/MeetingPage';
 import OpenSessionPage from './pages/OpenSessionPage';
 import FreeSchedulePage from './pages/FreeSchedulePage';
@@ -37,20 +40,18 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* --- ROUTE CÔNG KHAI (Ai cũng vào được) --- */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/sso/callback" element={<SsoCallback />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* --- ROUTE ĐƯỢC BẢO VỆ (Phải đăng nhập) --- */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <MeetingPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/student-home" element={<ProtectedRoute><StudentHomePage/></ProtectedRoute>} />
+        <Route path="/tutor-home" element={<ProtectedRoute><TutorHomePage/></ProtectedRoute>} />
+        <Route path="/admin-home" element={<ProtectedRoute><AdminHomePage/></ProtectedRoute>} />
 
+        <Route path="/meetings" element={<ProtectedRoute><MeetingPage/></ProtectedRoute>} />
         <Route path="/create-session" element={<ProtectedRoute><OpenSessionPage/></ProtectedRoute>} />
         <Route path="/free-schedule" element={<ProtectedRoute><FreeSchedulePage/></ProtectedRoute>} />
         <Route path="/session-info" element={<ProtectedRoute><SessionInfoPage/></ProtectedRoute>} />

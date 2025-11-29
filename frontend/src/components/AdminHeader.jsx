@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Bell, ChevronDown } from 'lucide-react';
 import logoBKTutor from '../assets/logo.png'; 
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -7,11 +7,21 @@ const AdminHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hàm kiểm tra active link đơn giản
-  const getLinkClass = (path) => {
-    return location.pathname === path
-      ? "text-blue-600 border-b-2 border-blue-600 py-5 font-bold cursor-pointer"
-      : "text-gray-900 hover:text-blue-600 py-5 font-medium cursor-pointer transition-colors";
+  const homePath = useMemo(() => {
+    const role = localStorage.getItem('user_role') || '';
+    if (['ADMIN', 'OFFICER', 'DEPARTMENT'].includes(role.toUpperCase())) {
+      return '/admin-home';
+    }
+    return '/admin-home';
+  }, []);
+
+  const getLinkClass = (path, includeChildren = false) => {
+    const isActive = includeChildren
+      ? location.pathname.startsWith(path)
+      : location.pathname === path;
+    return isActive
+      ? 'text-blue-600 border-b-2 border-blue-600 py-5 font-bold cursor-pointer'
+      : 'text-gray-900 hover:text-blue-600 py-5 font-medium cursor-pointer transition-colors';
   };
 
   return (
@@ -22,7 +32,7 @@ const AdminHeader = () => {
           {/* Logo */}
           <div 
             className="flex items-center gap-3 cursor-pointer" 
-            onClick={() => navigate('/')}
+            onClick={() => navigate(homePath)}
           >
             <img src={logoBKTutor} alt="BKTutor Logo" className="h-10 w-auto object-contain" />
             <span className="text-gray-900 font-extrabold text-2xl tracking-tight">
@@ -32,16 +42,16 @@ const AdminHeader = () => {
 
           {/* ADMIN MENU LINKS */}
           <nav className="hidden md:flex space-x-8 text-sm">
-            <Link to="/" className="text-gray-900 hover:text-blue-600 py-5 font-medium">
+            <Link to={homePath} className={getLinkClass('/admin-home', true)}>
               Trang chủ
             </Link>
             
             {/* Link này đang Active ở trang User Management */}
-            <Link to="/user-management" className={getLinkClass('/user-management')}>
+            <Link to="/user-management" className={getLinkClass('/user-management', true)}>
               Quản lý người dùng và phân quyền
             </Link>
             
-            <Link to="/admin-list" className="text-gray-900 hover:text-blue-600 py-5 font-medium">
+            <Link to="/admin-home" className="text-gray-900 hover:text-blue-600 py-5 font-medium">
               Danh sách admin
             </Link>
           </nav>
