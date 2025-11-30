@@ -43,11 +43,20 @@ def init_db():
         u3.id: asdict(u3),
     }
 
+    u_nva = User(
+        id="u_nva", 
+        name="Nguyễn Ngọc Tôn", 
+        email="ton.nguyen1411030723@hcmut.edu.vn", 
+        password=_hash("123"), 
+        role="TUTOR"
+    )
+    db["users"][u_nva.id] = asdict(u_nva)
+
     # --- SỬA ĐOẠN NÀY ---
     # Cập nhật theo model mới: dùng start_time/end_time thay vì time, bỏ student_id
     a1 = Appointment(
         id="a1", 
-        tutor_id="u1", 
+        tutor_id="u1",  # <--- Sửa ID cho đúng ông Nguyễn Văn A
         name="Luyện thi Đại số tuyến tính",
         start_time="2025-11-26 09:00:00",
         end_time="2025-11-26 11:00:00",
@@ -55,7 +64,46 @@ def init_db():
         max_slot=5,
         status="OPEN"
     )
-    db["appointments"] = {a1.id: asdict(a1)}
+    # Lưu a1 vào DB (Dùng key id để không bị ghi đè)
+    db["appointments"][a1.id] = asdict(a1) 
+
+    # --- TẠO BUỔI 2 ---
+    a2 = Appointment(
+        id="a2", 
+        tutor_id="u1    ", # <--- Sửa ID cho đúng
+        name="Luyện thi Đại số tuyến tính (Buổi 2)",
+        start_time="2025-12-06 14:00:00",
+        end_time="2025-12-06 16:00:00",
+        place="H6-304",
+        max_slot=5,
+        status="OPEN"
+    )
+    # Lưu a2 vào DB
+    db["appointments"][a2.id] = asdict(a2)
+
+    a_nva = Appointment(
+        id="apt_nva_1", 
+        tutor_id="u_nva", 
+        name="Họp nghiên cứu Khoa học",
+        start_time="2025-12-05 14:00:00",
+        end_time="2025-12-05 16:00:00",
+        place="Phòng H6-301",
+        max_slot=10,
+        status="OPEN"
+    )
+    db["appointments"][a_nva.id] = asdict(a_nva)
+
+    a_nvb = Appointment(
+        id="apt_nva_2", 
+        tutor_id="u_nva", 
+        name="Công nghệ phần mềm",
+        start_time="2025-12-06 14:00:00",
+        end_time="2025-12-06 16:00:00",
+        place="Phòng H6-301",
+        max_slot=90,
+        status="OPEN"
+    )
+    db["appointments"][a_nvb.id] = asdict(a_nvb)
 
     # --------------------
     # --- TÍN THÊM DỮ LIỆU MẪU CHO MODULE 3 - DOCUMENTS ---

@@ -20,6 +20,8 @@ import StudentResourcePage from './pages/StudentResourcePage';
 import UserManagementPage from './pages/UserManagementPage';
 import UserInfoPage from './pages/UserInfoPage';
 import SsoCallback from './pages/SsoCallback';
+import TutorSelectionPage from './pages/TutorSelectionPage'; // <--- Import mới
+import BookingPage from './pages/BookingPage'; // <--- Import trang mới
 // ... import các trang khác của bạn ...
 
 // --- COMPONENT BẢO VỆ (Guard) ---
@@ -65,7 +67,8 @@ function App() {
         <Route path="/user-info" element={<ProtectedRoute><UserInfoPage/></ProtectedRoute>} />
 
         {/* ... Thêm các route khác tương tự, bọc trong ProtectedRoute ... */}
-
+        <Route path="/tutor-selection" element={<ProtectedRoute><TutorSelectionPage/></ProtectedRoute>} />
+        <Route path="/booking-tutor" element={<ProtectedRoute><BookingPage/></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );

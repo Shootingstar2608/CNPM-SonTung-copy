@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, g, redirect
 import os
 from modules.integration.services import AuthService
 from core.security import require_login
-
+from core.database import db # <--- Nhớ import db
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 auth_service = AuthService()
@@ -61,3 +61,28 @@ def get_my_profile():
     if not user:
         return jsonify({'error': 'Unauthorized'}), 401
     return jsonify({'user': user}), 200
+
+@bp.route('/tutors', methods=['GET'])
+def list_tutors():
+    """API lấy danh sách tất cả Tutor trong hệ thống"""
+    tutors_list = []
+    
+    # Duyệt qua database users để lọc ra ai là TUTOR
+    for user in db['users'].values():
+        # Xử lý lấy role (do role có thể là string hoặc object tùy lúc init)
+        role = user.get('role')
+        role_name = role if isinstance(role, str) else role.get('name', '')
+        
+        if role_name == 'TUTOR':
+            tutors_list.append({
+                "id": user['id'],
+                "name": user['name'],
+                "email": user['email'],
+                # Các trường giả lập thêm để hiển thị đẹp trên UI (vì DB chưa có)
+                "faculty": user.get('faculty', 'Khoa KH&KT Máy tính'),
+                "group": "01", 
+                "room": "H6-304", 
+                "location": "Cơ sở 2"
+            })
+            
+    return jsonify(tutors_list), 200
