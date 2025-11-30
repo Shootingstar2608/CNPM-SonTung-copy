@@ -122,11 +122,20 @@ const BookingPage = () => {
                             
                             return (
                                 <div key={item.id} className="flex flex-wrap items-center justify-between py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors px-2 rounded">
-                                    <div className="w-1/5"><span className="block text-gray-500 text-xs font-bold uppercase">Ngày</span><span className="text-gray-800 text-sm font-medium">{start.date}</span></div>
-                                    <div className="w-1/5 text-center"><span className="block text-gray-500 text-xs font-bold uppercase">Giờ bắt đầu</span><span className="text-gray-800 text-sm font-medium">{start.time}</span></div>
-                                    <div className="w-1/5 text-center"><span className="block text-gray-500 text-xs font-bold uppercase">Thời gian</span><span className="text-gray-800 text-sm font-medium">{start.time} - {end.time}</span></div>
-                                    <div className="w-1/5 text-center"><span className="block text-gray-500 text-xs font-bold uppercase">Tuần</span><span className="text-gray-800 text-sm font-medium">--</span></div>
-                                    <div className="w-1/5 text-right">
+                                    {/* Cột MỚI: Tên buổi hẹn */}
+                                    <div className="w-1/4"><span className="block text-gray-500 text-xs font-bold uppercase">Chủ đề</span><span className="text-blue-700 text-sm font-bold">{item.name}</span></div>
+                                    
+                                    {/* Cột Ngày (Chỉnh width từ w-1/5 thành w-1/6) */}
+                                    <div className="w-1/6"><span className="block text-gray-500 text-xs font-bold uppercase">Ngày</span><span className="text-gray-800 text-sm font-medium">{start.date}</span></div>
+                                    
+                                    {/* Cột Giờ bắt đầu (Chỉnh width từ w-1/5 thành w-1/6) */}
+                                    <div className="w-1/6 text-center"><span className="block text-gray-500 text-xs font-bold uppercase">Giờ bắt đầu</span><span className="text-gray-800 text-sm font-medium">{start.time}</span></div>
+                                    
+                                    {/* Cột Thời gian (Chỉnh width từ w-1/5 thành w-1/6) */}
+                                    <div className="w-1/6 text-center"><span className="block text-gray-500 text-xs font-bold uppercase">Thời gian</span><span className="text-gray-800 text-sm font-medium">{start.time} - {end.time}</span></div>
+                                    
+                                    {/* Cột Action (Chỉnh width từ w-1/5 thành w-1/6) */}
+                                    <div className="w-1/6 text-right">
                                         <button onClick={() => handleBook(item.id)} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded text-sm shadow-sm transition-colors">Xác Nhận</button>
                                     </div>
                                 </div>

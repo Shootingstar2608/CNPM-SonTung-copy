@@ -70,7 +70,7 @@ def init_db():
     # --- TẠO BUỔI 2 ---
     a2 = Appointment(
         id="a2", 
-        tutor_id="u1    ", # <--- Sửa ID cho đúng
+        tutor_id="u1", # <--- Sửa ID cho đúng
         name="Luyện thi Đại số tuyến tính (Buổi 2)",
         start_time="2025-12-06 14:00:00",
         end_time="2025-12-06 16:00:00",

@@ -224,7 +224,7 @@ const OpenSessionPage = () => {
                         <div className="flex justify-center gap-4 pt-4">
                             <button 
                                 type="button"
-                                onClick={() => navigate('/')}
+                                onClick={() => navigate('/tutor-home')}
                                 className="px-8 py-2 border border-gray-400 rounded hover:bg-gray-50 text-gray-700 font-medium transition-colors"
                             >
                                 Hủy

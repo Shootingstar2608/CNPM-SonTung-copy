@@ -43,12 +43,23 @@ const MeetingPage = () => {
 
   useEffect(() => {
     const role = localStorage.getItem('user_role');
-    setUserRole(role ? role.toUpperCase() : '');
+    // Lấy vai trò và ID của người dùng hiện tại
+    const roleUpper = role ? role.toUpperCase() : ''; 
+    setUserRole(roleUpper);
+    const tutorId = localStorage.getItem('user_id'); 
 
     const fetchMeetings = async () => {
       setLoading(true);
       try {
         let url = 'http://127.0.0.1:5000/appointments/';
+        
+        // BƯỚC 1: Lọc theo Tutor ID nếu vai trò là TUTOR
+        if (roleUpper === 'TUTOR' && tutorId) {
+            // Nếu là Tutor, chỉ lấy lịch của Tutor đó bằng cách thêm query param
+            url = `http://127.0.0.1:5000/appointments/?tutor_id=${tutorId}`;
+        }
+        // Nếu là STUDENT, URL vẫn giữ nguyên để lấy tất cả lịch (cho tab Đăng ký mới)
+        
         const res = await fetch(url);
         if (!res.ok) throw new Error("Không thể tải dữ liệu");
         
@@ -64,7 +75,7 @@ const MeetingPage = () => {
     };
 
     fetchMeetings();
-  }, []);
+  }, []); // Dependency rỗng để chỉ chạy 1 lần khi component mount
 
   // --- 2. LOGIC LỌC DANH SÁCH ---
   const myBookings = meetings.filter(m => 
@@ -210,10 +221,20 @@ const MeetingPage = () => {
             )}
           </>
         ) : (
-          /* Tutor View - Giữ nguyên */
+          /* Tutor View - Đã cập nhật */
           <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-8 border-l-4 border-blue-600 pl-4">Quản lý buổi gặp</h1>
-            {loading ? <div className="text-center py-10">⏳ Đang tải...</div> : <MeetingList meetings={meetings} />}
+            <h1 className="text-2xl font-bold text-gray-900 mb-8 border-l-4 border-blue-600 pl-4">
+                Quản lý buổi gặp của tôi
+            </h1>
+            {loading ? (
+                <div className="text-center py-10">⏳ Đang tải...</div>
+            ) : (
+                <MeetingList 
+                    meetings={meetings} // meetings giờ đã được lọc trong useEffect
+                    title={`Danh sách các buổi tư vấn bạn đã tạo (${meetings.length})`}
+                    emptyMsg={"Bạn chưa tạo buổi tư vấn nào."}
+                />
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
               <ActionCard title="Mở buổi tư vấn" imageSrc={imgChart} onActionClick={() => navigate('/create-session')} onViewMoreClick={() => navigate('/create-session')} />
               <ActionCard title="Thiết lập lịch rảnh" imageSrc={imgSetup} onActionClick={() => navigate('/free-schedule')} onViewMoreClick={() => navigate('/free-schedule')} />
