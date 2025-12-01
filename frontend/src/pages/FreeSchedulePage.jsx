@@ -93,6 +93,15 @@ const FreeSchedulePage = () => {
   const handlePrevWeek = () => { if (currentWeek > 1) setCurrentWeek(curr => curr - 1); };
   const handleNextWeek = () => { setCurrentWeek(curr => curr + 1); };
 
+  // Logic reset
+  const handleReset = () => {
+    const confirmReset = window.confirm("Bạn có chắc chắn muốn reset lịch rảnh của tuần này?");
+    if (confirmReset) {
+      setSelectedCells([]); // Xóa hết các ô đã chọn
+      setNote('');          // Xóa ghi chú
+    }
+  };
+
   // Logic Grid
   const periods = Array.from({ length: 15 }, (_, i) => i + 1);
   const days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"];
@@ -184,7 +193,8 @@ const FreeSchedulePage = () => {
                   <label htmlFor="repeat" className="text-sm font-bold text-gray-700">Lặp lại cho tuần sau</label>
                </div>
                <div className="flex justify-center gap-4 mt-4">
-                  <button onClick={() => navigate('/tutor-home')} className="px-6 py-1.5 border border-gray-400 rounded hover:bg-gray-50 text-gray-700 font-medium">Hủy</button>
+                  <button onClick={() => navigate('/meetings')} className="px-6 py-1.5 border border-gray-400 rounded hover:bg-gray-50 text-gray-700 font-medium">Hủy</button>
+                  <button onClick={handleReset} className="px-4 py-1.5 border border-red-300 text-red-600 rounded hover:bg-red-50 font-medium text-sm">Reset Lịch </button>
                   <button onClick={handleSave} className="px-6 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded font-medium shadow-sm">Lưu</button>
                </div>
             </div>

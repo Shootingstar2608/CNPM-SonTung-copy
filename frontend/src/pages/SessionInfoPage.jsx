@@ -140,7 +140,42 @@ const SessionInfoPage = () => {
     }
   };
 
-  const handleTutorReschedule = async (newData) => { /* Logic Tutor */ };
+  const handleTutorReschedule = async (newData) => {
+    setIsRescheduleOpen(false); // Đóng modal trước
+    const targetAptId = sessionData.id;
+    
+    try {
+        const res = await fetch(`http://127.0.0.1:5000/appointments/${targetAptId}`, {
+            method: 'PUT', // API đổi lịch dùng PUT
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify(newData) // Gửi dữ liệu mới từ RescheduleModal
+        });
+        
+        const data = await res.json();
+
+        if (res.ok) {
+            setStatusModal({ 
+                isOpen: true, 
+                type: 'success', 
+                title: 'Thành công', 
+                message: 'Đã đổi lịch thành công! Dữ liệu đang được cập nhật.',
+                onConfirm: fetchSessionDetail // Cập nhật lại dữ liệu sau khi đổi lịch
+            });
+        } else {
+            setStatusModal({ 
+                isOpen: true, 
+                type: 'error', 
+                title: 'Lỗi đổi lịch', 
+                message: data.error || 'Có lỗi xảy ra khi gọi API đổi lịch.'
+            });
+        }
+    } catch (e) {
+        setStatusModal({ isOpen: true, type: 'error', title: 'Lỗi hệ thống', message: 'Không thể kết nối đến server.' });
+    }
+  };
 
   if (loading) return <div className="text-center pt-20">Đang tải thông tin...</div>;
   if (!sessionData) return null;
@@ -178,6 +213,8 @@ const SessionInfoPage = () => {
             {/* 1. TUTOR VIEW */}
             {userRole !== 'STUDENT' && (
                 <>
+                    {/* NÚT ĐÓNG MỚI CHO TUTOR */}
+                    <button onClick={() => navigate('/meetings')} className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-100 text-gray-700 font-medium min-w-[120px]">Đóng </button>
                     <button onClick={handleCancelClick} className="px-6 py-2 border border-gray-400 rounded hover:bg-gray-50 text-red-600 font-medium min-w-[120px]">Hủy Lịch</button>
                     <button onClick={() => setIsRescheduleOpen(true)} className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded font-medium min-w-[120px]">Đổi Lịch</button>
                     <button onClick={() => setIsMinutesOpen(true)} className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium min-w-[120px]">Biên bản</button>

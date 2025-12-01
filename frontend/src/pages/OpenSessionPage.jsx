@@ -79,7 +79,7 @@ const OpenSessionPage = () => {
 
             if (response.ok) {
                 alert("✅ Tạo buổi tư vấn thành công!");
-                navigate('/tutor-home'); // Quay về trang chủ của Tutor
+                navigate('/meetings'); // Quay về trang chủ của Tutor
             } else {
                 // Xử lý lỗi từ Backend (ví dụ: trùng lịch)
                 alert(`❌ Lỗi: ${data.error || 'Không thể tạo lịch'}`);
@@ -224,7 +224,7 @@ const OpenSessionPage = () => {
                         <div className="flex justify-center gap-4 pt-4">
                             <button 
                                 type="button"
-                                onClick={() => navigate('/tutor-home')}
+                                onClick={() => navigate('/meetings')}
                                 className="px-8 py-2 border border-gray-400 rounded hover:bg-gray-50 text-gray-700 font-medium transition-colors"
                             >
                                 Hủy

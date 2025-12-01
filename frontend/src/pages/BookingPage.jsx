@@ -100,7 +100,17 @@ const BookingPage = () => {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <h1 className="text-xl font-bold text-gray-900 mb-6">Đặt lịch Tutor</h1>
+        {/* HEADER CÓ NÚT ĐÓNG */}
+        <div className="flex justify-between items-center mb-6">
+            <h1 className="text-xl font-bold text-gray-900">Đặt lịch Tutor</h1>
+            {/* NÚT ĐÓNG MỚI (GÓC PHẢI) */}
+            <button 
+                onClick={() => navigate('/meetings', { state: { activeTab: 'booking' } })}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
+            >
+                Đóng
+            </button>
+        </div>
 
         <div className="bg-gray-100 rounded-xl p-8 min-h-[500px]">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

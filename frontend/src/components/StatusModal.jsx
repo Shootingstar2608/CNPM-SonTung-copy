@@ -69,10 +69,12 @@ const StatusModal = ({
 
             {/* 2. Warning (Thoát / Chọn Lại) */}
             {isWarning && (
-              <div className="flex gap-4">
-                <button onClick={onClose} className="flex-1 py-2 border border-gray-300 rounded text-gray-900 font-bold hover:bg-gray-50">Thoát</button>
-                <button onClick={onConfirm} className="flex-1 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">{confirmText}</button>
-              </div>
+              <button 
+                onClick={handleSingleButtonClick} 
+                className="w-full py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 shadow-sm transition-colors"
+              >
+                {confirmText}
+              </button>
             )}
 
             {/* 3. Error Action (Thoát / Thêm) */}

@@ -12,7 +12,7 @@ const Header = () => {
   // State để đóng/mở menu người dùng (Avatar)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const roleHomePath = useMemo(() => {
+  const { roleHomePath, isTutor } = useMemo(() => {
     const roleMap = {
       STUDENT: '/student-home',
       TUTOR: '/tutor-home',
@@ -36,7 +36,11 @@ const Header = () => {
     };
 
     const detectedRole = resolveRole();
-    return roleMap[detectedRole] || '/login';
+    const homePath = roleMap[detectedRole] || '/login'; // <--- Tách biến
+    return { // <--- THAY ĐỔI: Trả về Object
+      roleHomePath: homePath, 
+      isTutor: detectedRole === 'TUTOR' // <--- BỔ SUNG: Cờ kiểm tra
+    };
   }, []);
 
   const handleNavigateHome = () => navigate(roleHomePath);
@@ -76,12 +80,16 @@ const Header = () => {
           {/* --- MENU LINKS --- */}
           <nav className="hidden md:flex space-x-8 text-sm">
             <Link to={roleHomePath} className={getLinkClass(roleHomePath, true)}>Trang chủ</Link>
-            <Link to={roleHomePath} className="text-gray-900 hover:text-blue-600 py-5 font-medium">Thông tin</Link>
-            <Link to={roleHomePath} className="text-gray-900 hover:text-blue-600 py-5 font-medium">Blog</Link>
-            
-            <div className="relative group cursor-pointer flex items-center gap-1 hover:text-blue-600 py-5 font-medium">
-              Đặt lịch <ChevronDown size={14} />
-            </div>
+            {!isTutor && ( // <--- ĐIỀU KIỆN
+                <>
+                    {/* <Link to={roleHomePath} className="text-gray-900 hover:text-blue-600 py-5 font-medium">Thông tin</Link> 
+                    <Link to={roleHomePath} className="text-gray-900 hover:text-blue-600 py-5 font-medium">Blog</Link> */}
+                    
+                    <div className="relative group cursor-pointer flex items-center gap-1 hover:text-blue-600 py-5 font-medium">
+                        Đặt lịch <ChevronDown size={14} />
+                    </div>
+                </>
+            )}
             
             {/* Link 1: Quản lý buổi gặp */}
             <Link to="/meetings" className={getLinkClass('/meetings', true)}>

@@ -9,7 +9,7 @@ const studentFeatures = [
     id: 1,
     title: 'Quản lý buổi gặp',
     description: 'Đăng ký slot tư vấn, theo dõi trạng thái lịch hẹn với tutor.',
-    statusLabel: 'Đồng bộ',
+    statusLabel: 'Đang hoạt động',
     statusColor: 'text-green-600',
     action: '/meetings',
     illustration: 'https://images.unsplash.com/photo-1486591978090-586b3d0d8cd1?auto=format&fit=crop&w=900&q=80',
@@ -18,8 +18,8 @@ const studentFeatures = [
     id: 2,
     title: 'Kho tài liệu học tập',
     description: 'Tải giáo trình, đề cương, tài liệu bổ trợ từ hệ thống.',
-    statusLabel: 'Hoạt động',
-    statusColor: 'text-blue-600',
+    statusLabel: 'Đang hoạt động',
+    statusColor: 'text-green-600',
     action: '/resources/student',
     illustration: 'https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?auto=format&fit=crop&w=900&q=80',
   },
@@ -79,8 +79,8 @@ const StudentHomePage = () => {
           </button>
           <nav className="hidden md:flex items-center gap-5">
             <NavLink label="Trang chủ" active />
-            <NavLink label="Thông tin" />
-            <NavLink label="Blog" />
+            {/* <NavLink label="Thông tin" />
+            <NavLink label="Blog" /> */}
             <NavLink label="Đặt lịch" onClick={() => navigate('/meetings')} />
             <NavLink label="Phản hồi chất lượng" onClick={() => navigate('/feedback')} />
             <NavLink label="Tài liệu học tập" onClick={() => navigate('/resources/student')} />
@@ -177,19 +177,7 @@ const StudentHomePage = () => {
               </div>
             </div>
           ))}
-        </div>
-        <div className="flex items-center justify-center gap-2">
-          {[1, 2, 3].map((page) => (
-            <button
-              key={page}
-              className={`w-8 h-8 rounded-full border text-sm ${
-                page === 1 ? 'bg-black text-white' : 'hover:bg-gray-100'
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-        </div>
+        </div>~``
       </section>
 
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">

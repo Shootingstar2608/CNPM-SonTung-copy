@@ -81,7 +81,7 @@ const TutorHomePage = () => {
             <NavItem label="Trang chủ" active />
             <NavItem label="Quản lý buổi gặp" onClick={() => navigate('/meetings')} />
             <NavItem label="Tài liệu học tập" onClick={() => navigate('/resources')} />
-            <NavItem label="Phản hồi chất lượng" onClick={() => navigate('/feedback')} />
+            {/* <NavItem label="Phản hồi chất lượng" onClick={() => navigate('/feedback')} /> */}
           </nav>
           <div className="flex items-center gap-4">
             <Bell size={18} className="text-gray-500" />
