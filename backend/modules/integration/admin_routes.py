@@ -16,14 +16,15 @@ def _public_user(u: dict) -> dict:
         user_copy['role'] = role.name
     elif isinstance(role, dict):
         user_copy['role'] = role.get('name', 'UNKNOWN')
-        
     return user_copy
+
 
 @bp.route('/users', methods=['GET'])
 @require_role('ADMIN')
 def list_users():
     users_list = [_public_user(u) for u in db['users'].values()]
     return jsonify({'count': len(users_list), 'users': users_list}), 200
+
 
 @bp.route('/grant-role', methods=['POST'])
 @require_role('ADMIN')
