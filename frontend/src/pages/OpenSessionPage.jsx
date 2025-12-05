@@ -11,7 +11,8 @@ const OpenSessionPage = () => {
         topic: '',
         content: '',
         date: '',
-        timeSlot: '',
+        startTime: '',
+        endTime: '',
         mode: 'Online',
         maxSlot: 0,
         place: ''
@@ -34,19 +35,22 @@ const OpenSessionPage = () => {
         // Backend yêu cầu: name, start_time, end_time, place, max_slot
         // Format ngày giờ: "YYYY-MM-DD HH:MM:SS"
 
-        if (!formData.topic || !formData.date || !formData.timeSlot || !formData.place) {
+        if (!formData.topic || !formData.date || !formData.startTime || !formData.endTime || !formData.place) {
             alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
             setLoading(false);
             return;
         }
 
-        // Tách giờ từ chuỗi "09:00 - 11:00"
-        // Giả sử timeSlot có dạng "HH:MM - HH:MM"
-        const [startTimeStr, endTimeStr] = formData.timeSlot.split(' - ');
-        
+        // Kiểm tra giờ kết thúc phải sau giờ bắt đầu
+        if (formData.endTime <= formData.startTime) {
+            alert("Giờ kết thúc phải sau giờ bắt đầu!");
+            setLoading(false);
+            return;
+        }
+
         // Ghép thành chuỗi đầy đủ: "2025-11-28 09:00:00"
-        const fullStartTime = `${formData.date} ${startTimeStr}:00`;
-        const fullEndTime = `${formData.date} ${endTimeStr}:00`;
+        const fullStartTime = `${formData.date} ${formData.startTime}:00`;
+        const fullEndTime = `${formData.date} ${formData.endTime}:00`;
 
         const payload = {
             name: formData.topic,           // Backend dùng 'name'
@@ -142,56 +146,37 @@ const OpenSessionPage = () => {
                             {/* Cột 1: Ngày */}
                             <div className="flex flex-col gap-2">
                                 <label className="text-sm font-bold text-gray-800">Ngày</label>
-                                <div className="relative">
-                                    <select 
-                                        name="date"
-                                        value={formData.date}
-                                        onChange={handleChange}
-                                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-500 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="">Chọn Ngày</option>
-                                        {/* Lưu ý: Value phải là định dạng YYYY-MM-DD để dễ ghép chuỗi */}
-                                        <option value="2025-11-28">28/11/2025</option>
-                                        <option value="2025-11-29">29/11/2025</option>
-                                        <option value="2025-12-01">01/12/2025</option>
-                                    </select>
-                                    <ChevronDown size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
-                                </div>
+                                <input 
+                                    type="date"
+                                    name="date"
+                                    value={formData.date}
+                                    onChange={handleChange}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
                             </div>
 
-                            {/* Cột 2: Khung giờ */}
+                            {/* Cột 2: Giờ bắt đầu */}
                             <div className="flex flex-col gap-2">
-                                <label className="text-sm font-bold text-gray-800">Khung giờ</label>
-                                <div className="relative">
-                                    <select 
-                                        name="timeSlot"
-                                        value={formData.timeSlot}
-                                        onChange={handleChange}
-                                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-500 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="">Chọn Khung giờ</option>
-                                        <option value="09:00 - 11:00">09:00 - 11:00</option>
-                                        <option value="14:00 - 16:00">14:00 - 16:00</option>
-                                    </select>
-                                    <ChevronDown size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
-                                </div>
+                                <label className="text-sm font-bold text-gray-800">Giờ bắt đầu</label>
+                                <input 
+                                    type="time"
+                                    name="startTime"
+                                    value={formData.startTime}
+                                    onChange={handleChange}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
                             </div>
 
-                            {/* Cột 3: Hình thức */}
+                            {/* Cột 3: Giờ kết thúc */}
                             <div className="flex flex-col gap-2">
-                                <label className="text-sm font-bold text-gray-800">Hình thức</label>
-                                <div className="relative">
-                                    <select 
-                                        name="mode"
-                                        value={formData.mode}
-                                        onChange={handleChange}
-                                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="Online">Online</option>
-                                        <option value="Offline">Offline</option>
-                                    </select>
-                                    <ChevronDown size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
-                                </div>
+                                <label className="text-sm font-bold text-gray-800">Giờ kết thúc</label>
+                                <input 
+                                    type="time"
+                                    name="endTime"
+                                    value={formData.endTime}
+                                    onChange={handleChange}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
                             </div>
 
                             {/* Cột 4: Số lượng */}
@@ -203,8 +188,25 @@ const OpenSessionPage = () => {
                                     onChange={handleChange}
                                     type="number" 
                                     min="1"
-                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
+                            </div>
+                        </div>
+
+                        {/* Hình thức */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-bold text-gray-800">Hình thức</label>
+                            <div className="relative">
+                                <select 
+                                    name="mode"
+                                    value={formData.mode}
+                                    onChange={handleChange}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="Online">Online</option>
+                                    <option value="Offline">Offline</option>
+                                </select>
+                                <ChevronDown size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
                             </div>
                         </div>
 
