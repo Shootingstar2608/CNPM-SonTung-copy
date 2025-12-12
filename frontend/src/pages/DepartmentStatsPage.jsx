@@ -84,12 +84,43 @@ const DepartmentStatsPage = () => {
       const j = await res.json();
       const updated = j.user;
       setUsers(prev => prev.map(x => x.id === updated.id ? updated : x));
+      
+      // Tạo notification cho sinh viên
+      await createNotification(selectedStudent.id, {
+        score: form.score,
+        conduct_points: form.conduct_points,
+        scholarship_level: form.scholarship_level
+      });
+      
       setEditOpen(false);
       setSelectedStudent(null);
+      alert('Đã cập nhật điểm và gửi thông báo cho sinh viên!');
     } else {
-      // simple error handling
       alert('Không thể lưu. Hãy kiểm tra quyền hoặc backend.');
     }
+  };
+
+  const createNotification = async (studentId, updates) => {
+    const token = localStorage.getItem('access_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    let message = 'Điểm của bạn đã được cập nhật:\n';
+    if (updates.score) message += `- Điểm: ${updates.score}\n`;
+    if (updates.conduct_points) message += `- Điểm rèn luyện: ${updates.conduct_points}\n`;
+    if (updates.scholarship_level) message += `- Học bổng: ${updates.scholarship_level}`;
+
+    await fetch('http://127.0.0.1:5000/info/notifications', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        user_id: studentId,
+        title: '🎓 Cập nhật điểm',
+        message: message,
+        type: 'SUCCESS',
+        link: '/user-info'
+      })
+    });
   };
 
   return (

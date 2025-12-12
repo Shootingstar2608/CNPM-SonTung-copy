@@ -16,6 +16,7 @@ db = {
     "documents": {},     # doc_id -> Document
     "access_logs": {},   # Xem lịch sử truy cập
     "free_schedules": {},
+    "notifications": {}, # notification_id -> Notification
     "scheduler_config": {
         "main": {
             "schedule_type": "DAILY",   # Mặc định chạy hàng ngày

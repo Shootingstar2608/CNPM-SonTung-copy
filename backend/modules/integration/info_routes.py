@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, g, current_app
 from core.database import db
 from core.security import require_login, require_role
 from datetime import datetime
+from dataclasses import asdict
 
 bp = Blueprint('info', __name__, url_prefix='/info')
 
@@ -207,3 +208,77 @@ def update_user(user_id):
     u = user.copy()
     u.pop('password', None)
     return jsonify({'user': u}), 200
+
+
+@bp.route('/notifications/my', methods=['GET'])
+@require_login
+def get_my_notifications():
+    """Lấy tất cả notifications của user hiện tại"""
+    user = g.get('current_user')
+    if not user:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_id = user.get('id')
+    all_notifications = []
+    
+    for notif_id, notif in db.get('notifications', {}).items():
+        if notif.get('user_id') == user_id:
+            all_notifications.append(notif)
+    
+    # Sort by created_at desc
+    all_notifications.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+    
+    # Count unread
+    unread_count = sum(1 for n in all_notifications if not n.get('is_read', False))
+    
+    return jsonify({
+        'notifications': all_notifications,
+        'unread_count': unread_count
+    }), 200
+
+
+@bp.route('/notifications/<notif_id>/read', methods=['POST'])
+@require_login
+def mark_notification_read(notif_id):
+    """Đánh dấu notification đã đọc"""
+    user = g.get('current_user')
+    if not user:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    notif = db.get('notifications', {}).get(notif_id)
+    if not notif:
+        return jsonify({'error': 'Notification not found'}), 404
+    
+    if notif.get('user_id') != user.get('id'):
+        return jsonify({'error': 'Forbidden'}), 403
+    
+    notif['is_read'] = True
+    db['notifications'][notif_id] = notif
+    
+    return jsonify({'notification': notif}), 200
+
+
+@bp.route('/notifications', methods=['POST'])
+@require_login
+def create_notification():
+    """Tạo notification mới (dùng bởi DEPARTMENT khi cập nhật điểm)"""
+    data = request.get_json() or {}
+    
+    from core.models import Notification
+    
+    notif_id = f"notif_{len(db.get('notifications', {})) + 1}"
+    
+    notif = Notification(
+        id=notif_id,
+        user_id=data.get('user_id'),
+        title=data.get('title', 'Thông báo'),
+        message=data.get('message', ''),
+        type=data.get('type', 'INFO'),
+        is_read=False,
+        created_at=datetime.utcnow().isoformat() + 'Z',
+        link=data.get('link')
+    )
+    
+    db['notifications'][notif_id] = asdict(notif)
+    
+    return jsonify({'notification': asdict(notif)}), 201

@@ -45,19 +45,169 @@ def home():
 def authorize():
     redirect_uri = request.args.get('redirect_uri', '')
     return f"""
-    <div style="text-align:center; padding-top:20px; font-family:sans-serif">
-        <h2>Giả lập SSO (5 Roles)</h2>
-        <p>Vui lòng đăng nhập bằng Email & Mật khẩu:</p>
-
-        <div style="margin: 10px 0;">
-            <form action="/login-action" method="POST" style="display:inline-block; text-align:left;">
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>HCMUT SSO - Đăng nhập</title>
+        <style>
+            * {{
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }}
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }}
+            .container {{
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                max-width: 420px;
+                width: 100%;
+                overflow: hidden;
+            }}
+            .header {{
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 40px 30px;
+                text-align: center;
+                color: white;
+            }}
+            .header h1 {{
+                font-size: 28px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }}
+            .header p {{
+                font-size: 14px;
+                opacity: 0.95;
+            }}
+            .form-container {{
+                padding: 40px 30px;
+            }}
+            .form-group {{
+                margin-bottom: 24px;
+            }}
+            .form-group label {{
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #333;
+                font-size: 14px;
+            }}
+            .form-group input {{
+                width: 100%;
+                padding: 14px 16px;
+                border: 2px solid #e1e8ed;
+                border-radius: 8px;
+                font-size: 15px;
+                transition: all 0.3s ease;
+                outline: none;
+            }}
+            .form-group input:focus {{
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }}
+            .btn-login {{
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                margin-top: 8px;
+            }}
+            .btn-login:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            }}
+            .btn-login:active {{
+                transform: translateY(0);
+            }}
+            .footer {{
+                text-align: center;
+                padding: 20px 30px 30px;
+                color: #666;
+                font-size: 13px;
+            }}
+            .footer a {{
+                color: #667eea;
+                text-decoration: none;
+                font-weight: 600;
+            }}
+            .footer a:hover {{
+                text-decoration: underline;
+            }}
+            .logo {{
+                width: 60px;
+                height: 60px;
+                background: white;
+                border-radius: 50%;
+                margin: 0 auto 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 32px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="logo">🎓</div>
+                <h1>HCMUT SSO</h1>
+                <p>Đăng nhập hệ thống BKTutor</p>
+            </div>
+            
+            <form action="/login-action" method="POST" class="form-container">
                 <input type="hidden" name="redirect_uri" value="{redirect_uri}">
-                <div style="margin-bottom:8px;"><label>Email:</label><br><input name="email" type="email" style="padding:8px; width:260px" required></div>
-                <div style="margin-bottom:8px;"><label>Mật khẩu:</label><br><input name="password" type="password" style="padding:8px; width:260px" required></div>
-                <div><button type="submit" style="padding:10px 18px; background:#1976d2; color:white; border:none; cursor:pointer;">Đăng nhập bằng Email</button></div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input 
+                        id="email"
+                        name="email" 
+                        type="email" 
+                        placeholder="example@hcmut.edu.vn"
+                        required
+                        autofocus
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <input 
+                        id="password"
+                        name="password" 
+                        type="password" 
+                        placeholder="Nhập mật khẩu"
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="btn-login">
+                    Đăng nhập
+                </button>
             </form>
+            
+            <div class="footer">
+                <p>Bạn chưa có tài khoản? <a href="http://127.0.0.1:5173/register">Đăng ký ngay</a></p>
+            </div>
         </div>
-    </div>
+    </body>
+    </html>
     """
 
 @app.route('/login-action', methods=['POST'])
@@ -190,23 +340,173 @@ def token_exchange():
 def logout():
     """SSO Logout endpoint"""
     return """
-    <div style="text-align:center; padding-top:50px; font-family:sans-serif">
-        <h2>Đã đăng xuất khỏi HCMUT SSO</h2>
-        <p>Bạn có thể đóng tab này.</p>
-    </div>
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>HCMUT SSO - Đăng xuất</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .container {
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                max-width: 420px;
+                width: 100%;
+                padding: 60px 40px;
+                text-align: center;
+            }
+            .icon {
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 50%;
+                margin: 0 auto 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 40px;
+            }
+            h1 {
+                font-size: 24px;
+                color: #333;
+                margin-bottom: 12px;
+            }
+            p {
+                color: #666;
+                font-size: 15px;
+                line-height: 1.6;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="icon">✓</div>
+            <h1>Đăng xuất thành công</h1>
+            <p>Bạn đã đăng xuất khỏi HCMUT SSO.<br>Bạn có thể đóng tab này.</p>
+        </div>
+    </body>
+    </html>
     """
 
 @app.route('/reset', methods=['GET'])
 def reset_password():
     return """
-    <div style="text-align:center; padding-top:50px; font-family:sans-serif">
-        <h2>Đặt lại mật khẩu</h2>
-        <p>Đây là trang giả lập reset password</p>
-        <form>
-            <input type="email" placeholder="Email" style="padding:10px; width:300px"><br><br>
-            <button style="padding:10px 20px; cursor:pointer">Gửi link reset</button>
-        </form>
-    </div>
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>HCMUT SSO - Đặt lại mật khẩu</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .container {
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                max-width: 420px;
+                width: 100%;
+                padding: 40px;
+            }
+            h1 {
+                font-size: 24px;
+                color: #333;
+                margin-bottom: 8px;
+                text-align: center;
+            }
+            .subtitle {
+                color: #666;
+                font-size: 14px;
+                text-align: center;
+                margin-bottom: 32px;
+            }
+            .form-group {
+                margin-bottom: 24px;
+            }
+            .form-group label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #333;
+                font-size: 14px;
+            }
+            .form-group input {
+                width: 100%;
+                padding: 14px 16px;
+                border: 2px solid #e1e8ed;
+                border-radius: 8px;
+                font-size: 15px;
+                outline: none;
+                transition: all 0.3s ease;
+            }
+            .form-group input:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+            .btn {
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            }
+            .back-link {
+                text-align: center;
+                margin-top: 20px;
+            }
+            .back-link a {
+                color: #667eea;
+                text-decoration: none;
+                font-size: 14px;
+                font-weight: 600;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Đặt lại mật khẩu</h1>
+            <p class="subtitle">Nhập email để nhận link đặt lại mật khẩu</p>
+            <form>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input id="email" type="email" placeholder="example@hcmut.edu.vn" required>
+                </div>
+                <button type="submit" class="btn">Gửi link đặt lại</button>
+            </form>
+            <div class="back-link">
+                <a href="javascript:history.back()">← Quay lại đăng nhập</a>
+            </div>
+        </div>
+    </body>
+    </html>
     """
     
 @app.route('/debug/codes', methods=['GET'])

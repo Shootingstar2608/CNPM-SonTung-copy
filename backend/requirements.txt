@@ -4,3 +4,4 @@ PyJWT
 requests
 Flask-APScheduler
 flask-cors
+google-generativeai

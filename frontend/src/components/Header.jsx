@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Bell, ChevronDown, User, Calendar, Settings, LogOut } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
@@ -11,6 +11,9 @@ const Header = () => {
 
   // State để đóng/mở menu người dùng (Avatar)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const { roleHomePath, isTutor } = useMemo(() => {
     const roleMap = {
@@ -57,6 +60,52 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login', { replace: true });
+  };
+
+  // Fetch notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+
+        const res = await fetch('http://127.0.0.1:5000/info/notifications/my', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data.notifications || []);
+          setUnreadCount(data.unread_count || 0);
+        }
+      } catch (e) {
+        console.error('Failed to fetch notifications:', e);
+      }
+    };
+
+    fetchNotifications();
+    // Poll every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const markAsRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`http://127.0.0.1:5000/info/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        setNotifications(prev => 
+          prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (e) {
+      console.error('Failed to mark notification as read:', e);
+    }
   };
 
   return (
@@ -109,9 +158,69 @@ const Header = () => {
 
           {/* --- USER ACTIONS (RIGHT) --- */}
           <div className="flex items-center space-x-4">
-            <button className="text-gray-500 hover:text-gray-700">
-              <Bell size={20} />
-            </button>
+            {/* Notification Bell */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                className="text-gray-500 hover:text-gray-700 relative"
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {isNotificationOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsNotificationOpen(false)}
+                  ></div>
+
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl py-2 border border-gray-100 animate-fade-in-up z-50 max-h-96 overflow-y-auto">
+                    <div className="px-4 py-2 border-b border-gray-100 mb-1">
+                      <p className="text-sm font-bold text-gray-900">Thông báo</p>
+                    </div>
+
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                        Không có thông báo
+                      </div>
+                    ) : (
+                      notifications.map(notif => (
+                        <div
+                          key={notif.id}
+                          onClick={() => {
+                            markAsRead(notif.id);
+                            if (notif.link) {
+                              navigate(notif.link);
+                              setIsNotificationOpen(false);
+                            }
+                          }}
+                          className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors ${!notif.is_read ? 'bg-blue-50' : ''}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`w-2 h-2 rounded-full mt-1.5 ${!notif.is_read ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+                            <div className="flex-1">
+                              <p className={`text-sm ${!notif.is_read ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
+                                {notif.title}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">{notif.message}</p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {new Date(notif.created_at).toLocaleString('vi-VN')}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
             
             {/* Dropdown Menu User */}
             <div className="relative">

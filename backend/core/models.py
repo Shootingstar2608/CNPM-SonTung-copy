@@ -167,6 +167,20 @@ class DocumentAccess:
         return asdict(self)
     
 @dataclass
+class Notification:
+    id: str
+    user_id: str  # User nhận thông báo
+    title: str
+    message: str
+    type: str = "INFO"  # INFO, SUCCESS, WARNING, ERROR
+    is_read: bool = False
+    created_at: str = ""
+    link: Optional[str] = None  # Link để navigate khi click
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+@dataclass
 class SchedulerConfig:
     # type: 'INTERVAL' | 'DAILY' | 'WEEKLY' | 'MONTHLY'
     schedule_type: str = "INTERVAL" 
